@@ -1,7 +1,7 @@
 substitutions:
   name: abl_emh1
   device_description: "Monitor and configure ABL eMH1 Charger via RS485/Modbus-ASCII"
-  external_components_source: https://github.com/jrv/esphome-abl-emh1
+  external_components_source: https://github.com/pascal-t/esphome-abl-emh1
   tx_pin: "17"
   rx_pin: "16"
   flow_control_pin: "5"
@@ -69,8 +69,8 @@ text_sensor:
     name: "Outlet State Code"
     id: outlet_state_code
     lambda: |-
-      int state = (int) id(outlet_state).state;
-      return { std::string(1, (char) ( (state >> 4) - 0x0A + 'A' ) ) };
+      uint8_t state = (uint8_t) id(outlet_state).state;
+      return { format_hex_pretty(&state, 1) };
   - platform: template
     name: Chargemode
     id: chargemode
@@ -135,6 +135,10 @@ sensor:
       name: "Outlet state"
       disabled_by_default: true
       id: outlet_state
+    charging_allowed:
+      name: "Charging allowed"
+      disable_by_default: true
+      id: charging_allowed
   - platform: template
     name: Power
     unit_of_measurement: W
@@ -183,6 +187,3 @@ switch:
           if ((id(abl_uptime).state > 10.0) && (id(outlet_state).state != NAN))
             id(modbus0)->send_enable(1);
 
- 
-
-          
