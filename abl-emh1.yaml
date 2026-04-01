@@ -147,10 +147,6 @@ sensor:
       name: "Outlet state"
       disabled_by_default: true
       id: outlet_state
-    charging_allowed:
-      name: "Charging allowed"
-      disable_by_default: true
-      id: charging_allowed
   - platform: template
     name: Power
     unit_of_measurement: W
