@@ -1,0 +1,32 @@
+status:
+  source: http
+  uri: http://abl_emh1.local/sensor/outlet_state
+  jq: |-
+    if 160 <= .value and .value <= 175 then "A"   # Dec for A0 - AF
+    elif 176 <= .value and .value <= 191 then "B" # Dec for B0 - BF
+    elif 192 <= .value and .value <= 207 then "C" # Dec for C0 - CF
+    else ""
+    end
+enabled:
+  source: http
+  uri: http://abl_emh1.local/number/max_amps
+  jq: .state|tonumber != 3
+enable:
+  source: http
+  uri: http://abl_emh1.local/number/max_amps/set?value={{if .enable}}6{{else}}3{{end}}
+  method: POST
+maxcurrent:
+  source: http
+  uri: http://abl_emh1.local/number/max_amps/set?value=${maxcurrent}
+  method: POST
+currents: # to provide the measured charging currents (A)
+  - source: http # source for L1 current
+    uri: http://abl_emh1.local/sensor/L1_current
+    jq: .value
+  - source: http # source for L2 current
+    uri: http://abl_emh1.local/sensor/L2_current
+    jq: .value
+  - source: http # source for L3 current
+    uri: http://abl_emh1.local/sensor/L3_current
+    jq: .value
+
