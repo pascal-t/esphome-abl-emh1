@@ -66,6 +66,12 @@ text_sensor:
       name: "Serial number"
       disabled_by_default: true
   - platform: template
+    name: "Outlet State Code"
+    id: outlet_state_code
+    lambda: |-
+      int state = (int) id(outlet_state).state;
+      return { std::string(1, (char) ( (state >> 4) - 0x0A + 'A' ) ) };
+  - platform: template
     name: Chargemode
     id: chargemode
     icon: "mdi:car"
@@ -129,6 +135,18 @@ sensor:
       name: "Outlet state"
       disabled_by_default: true
       id: outlet_state
+  - platform: template
+    name: Power
+    unit_of_measurement: W
+    icon: 'mdi:lightning-bolt'
+    device_class: power
+    state_class: "measurement"
+    lambda:
+      if (id(outlet_state).state == 0xC2) {
+        return (id(l1_current).state + id(l2_current).state + id(l3_current).state) * 230;
+      } else {
+        return 0;
+      }
   - platform: uptime
     name: Uptime Sensor
     id: abl_uptime
