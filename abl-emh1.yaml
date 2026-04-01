@@ -1,5 +1,5 @@
 substitutions:
-  name: abl_emh1
+  name: abl-emh1
   device_description: "Monitor and configure ABL eMH1 Charger via RS485/Modbus-ASCII"
   external_components_source: https://github.com/pascal-t/esphome-abl-emh1
   tx_pin: "17"
@@ -27,6 +27,18 @@ external_components:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+
+web_server:
+  port: 80
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Berlin
+    servers:
+     - 0.pool.ntp.org
+     - 1.pool.ntp.org
+     - 2.pool.ntp.org
 
 ota:
   - platform: esphome
@@ -186,4 +198,21 @@ switch:
       - lambda: |-
           if ((id(abl_uptime).state > 10.0) && (id(outlet_state).state != NAN))
             id(modbus0)->send_enable(1);
+  - platform: template
+    name: "Enable Charging"
+    id: enable_charging_switch
+    icon: "mdi:power"
+    lambda: 'return id(set_current).state >= 6;'
+    turn_off_action:
+      - lambda: |-
+          if (id(outlet_state).state == NAN) return;
+          int current = id(set_current).state;
+          ESP_LOGD("enable_charging_switch", "Turn off. Set current is: %d", current);
+          if (current >= 3) id(modbus0)->send_current(3);
+    turn_on_action:
+      - lambda: |-
+          if (id(outlet_state).state == NAN) return;
+          int current = id(set_current).state;
+          ESP_LOGD("enable_charging_switch", "Turn on. Set current is: %d", current);
+          if (current < 6) id(modbus0)->send_current(6);
 

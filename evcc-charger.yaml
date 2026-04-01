@@ -1,31 +1,31 @@
 status:
   source: http
-  uri: http://abl_emh1.local/text_sensor/Outlet+State+Code
+  uri: http://abl-emh1.local/text_sensor/Outlet+State+Code
   jq: .value[0:1]
 enabled:
   source: http
-  uri: http://abl_emh1.local/number/Max+Amps
-  jq: .value|tonumber >= 6
+  uri: http://abl-emh1.local/switch/Enable+Charging
+  jq: .value
 enable:
   source: http
-  uri: http://abl_emh1.local/number/Max+Amps/set?value={{if .enable}}6{{else}}3{{end}}
+  uri: http://abl-emh1.local/switch/Enable+Charging/turn_{{if .enable}}on{{else}}off{{end}}
   method: POST
 maxcurrent:
   source: http
-  uri: http://abl_emh1.local/number/Max+Amps/set?value=${maxcurrent}
+  uri: http://abl-emh1.local/number/Max+Amps/set?value=${maxcurrent}
   method: POST
 power:
   source: http
-  uri: http://abl_emh1.local/sensor/Power
+  uri: http://abl-emh1.local/sensor/Power
   jq: .value
 currents: # to provide the measured charging currents (A)
   - source: http # source for L1 current
-    uri: http://abl_emh1.local/sensor/L1+current
+    uri: http://abl-emh1.local/sensor/L1+current
     jq: .value
   - source: http # source for L2 current
-    uri: http://abl_emh1.local/sensor/L2+current
+    uri: http://abl-emh1.local/sensor/L2+current
     jq: .value
   - source: http # source for L3 current
-    uri: http://abl_emh1.local/sensor/L3+current
+    uri: http://abl-emh1.local/sensor/L3+current
     jq: .value
 
