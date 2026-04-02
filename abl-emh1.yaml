@@ -185,15 +185,17 @@ switch:
     name: "Enable"
     id: enable_switch
     icon: "mdi:power"
-    lambda: 'return (id(outlet_state).state != 0xE0);'
+    lambda: 'return id(outlet_state).state != 0xE0;'
     turn_off_action: 
       - lambda: |-
-          if ((id(abl_uptime).state > 10.0) && (id(outlet_state).state != NAN)) 
-            id(modbus0)->send_enable(0);
+          if (id(abl_uptime).state <= 10.0) return;
+          if (id(outlet_state).state == NAN) return;
+          id(modbus0)->send_enable(0);
     turn_on_action: 
       - lambda: |-
-          if ((id(abl_uptime).state > 10.0) && (id(outlet_state).state != NAN))
-            id(modbus0)->send_enable(1);
+          if (id(abl_uptime).state <= 10.0) return;
+          if (id(outlet_state).state == NAN) return;
+          id(modbus0)->send_enable(1);
   - platform: template
     name: "Enable Charging"
     id: enable_charging_switch
