@@ -1,23 +1,34 @@
 status:
   source: http
-  uri: http://abl-emh1.local/text_sensor/Outlet+State+Code
-  jq: .value[0:1]
+  uri: http://abl-emh1.local/sensor/Outlet+state
+  # get first hex digit: e.g. 194 == 0xC2 -> "C"; with map: 194/16 = 12 -> "C"
+  jq: '{ "10": "A", "11": "B", "12": "C" }[(.value / 16)|floor|tostring]'
+  cache: 10s
 enabled:
   source: http
   uri: http://abl-emh1.local/switch/Enable+Charging
   jq: .value
+  cache: 10s
 enable:
-  source: http
-  uri: http://abl-emh1.local/switch/Enable+Charging/turn_{{if .enable}}on{{else}}off{{end}}
-  method: POST
+  source: sequence
+  set:
+    - source: sleep
+      duration: 5s
+    - source: http
+      uri: http://abl-emh1.local/switch/Enable+Charging/turn_{{if .enable}}on{{else}}off{{end}}
+      method: POST
 maxcurrent:
   source: http
   uri: http://abl-emh1.local/number/Max+Amps/set?value=${maxcurrent}
   method: POST
+# power and currents only works correctly if the Wallbox has current measuring capabilities.
+# Otherwise, Ln+current always return 100A which produces wrong power readings if used for that
+# or produces warnings, since evcc thinks the wallbox provides more current than it should.
 power:
   source: http
   uri: http://abl-emh1.local/sensor/Power
   jq: .value
+  cache: 10s
 currents: # to provide the measured charging currents (A)
   - source: http # source for L1 current
     uri: http://abl-emh1.local/sensor/L1+current

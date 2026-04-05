@@ -113,17 +113,17 @@ sensor:
     l1_current:
       name: "L1 current"
       state_class: "measurement"
-      accuracy_decimals: 0
+      accuracy_decimals: 1
       id: l1_current
     l2_current:
       name: "L2 current"
       state_class: "measurement"
-      accuracy_decimals: 0
+      accuracy_decimals: 1
       id: l2_current
     l3_current:
       name: "L3 current"
       state_class: "measurement"
-      accuracy_decimals: 0
+      accuracy_decimals: 1
       id: l3_current
     max_current:
       name: "Max current"
@@ -154,11 +154,10 @@ sensor:
     device_class: power
     state_class: "measurement"
     lambda:
-      if (id(outlet_state).state == 0xC2) {
-        return (id(l1_current).state + id(l2_current).state + id(l3_current).state) * 230;
-      } else {
+      if (id(outlet_state).state != 0xC2) {
         return 0;
       }
+      return (id(l1_current).state + id(l2_current).state + id(l3_current).state) * 230;
   - platform: uptime
     name: Uptime Sensor
     id: abl_uptime
@@ -200,17 +199,20 @@ switch:
     name: "Enable Charging"
     id: enable_charging_switch
     icon: "mdi:power"
-    lambda: 'return id(set_current).state >= 6;'
-    turn_off_action:
-      - lambda: |-
-          if (id(outlet_state).state == NAN) return;
-          int current = id(set_current).state;
-          ESP_LOGD("enable_charging_switch", "Turn off. Set current is: %d", current);
-          if (current >= 3) id(modbus0)->send_current(3);
+    lambda: |-
+      int current = std::roundl(id(max_current).state);
+      // ESP_LOGD("main", "Enable Charging state. Set current is: %d", current);
+      return id(max_current).state >= 6;
     turn_on_action:
       - lambda: |-
           if (id(outlet_state).state == NAN) return;
-          int current = id(set_current).state;
-          ESP_LOGD("enable_charging_switch", "Turn on. Set current is: %d", current);
+          int current = std::roundl(id(max_current).state);
+          ESP_LOGD("main", "Enable charging. Set current is: %d", current);
           if (current < 6) id(modbus0)->send_current(6);
+    turn_off_action:
+      - lambda: |-
+          if (id(outlet_state).state == NAN) return;
+          int current = std::roundl(id(max_current).state);
+          ESP_LOGD("main", "Disable charging. Set current is: %d", current);
+          if (current >= 3) id(modbus0)->send_current(3);
 
