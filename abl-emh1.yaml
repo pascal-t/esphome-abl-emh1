@@ -18,11 +18,12 @@ esp32:
   board: esp32dev
 
 external_components:
-  source:
-    type: git
-    url: ${external_components_source}
-    ref: main
-  refresh: 0s
+  - source: components
+#   source:
+#     type: git
+#     url: ${external_components_source}
+#     ref: no-current-allowed
+#   refresh: 0s
 
 wifi:
   ssid: !secret wifi_ssid
@@ -147,6 +148,10 @@ sensor:
       name: "Outlet state"
       disabled_by_default: true
       id: outlet_state
+    charging_allowed:
+      name: "Charging allowed"
+      disabled_by_default: true
+      id: charging_allowed
   - platform: template
     name: Power
     unit_of_measurement: W
@@ -168,7 +173,7 @@ number:
     name: "Max Amps"
     id: set_current
     icon: mdi:arrow-oscillating
-    min_value: 3
+    min_value: 6
     max_value: 32
     step: 1
     optimistic: false
@@ -196,23 +201,20 @@ switch:
           if (id(outlet_state).state == NAN) return;
           id(modbus0)->send_enable(1);
   - platform: template
-    name: "Enable Charging"
-    id: enable_charging_switch
+    name: "Allow chaging"
+    id: allow_charging_switch
     icon: "mdi:power"
-    lambda: |-
-      int current = std::roundl(id(max_current).state);
-      // ESP_LOGD("main", "Enable Charging state. Set current is: %d", current);
-      return id(max_current).state >= 6;
+    lambda: 'return id(charging_allowed).state == 1;'
     turn_on_action:
       - lambda: |-
           if (id(outlet_state).state == NAN) return;
-          int current = std::roundl(id(max_current).state);
-          ESP_LOGD("main", "Enable charging. Set current is: %d", current);
-          if (current < 6) id(modbus0)->send_current(6);
+          int state = std::roundl(id(charging_allowed).state);
+          ESP_LOGD("main", "Allow charging turn on. Current state is: %d", state);
+          if (state <= 0) id(modbus0)->send_current(16);
     turn_off_action:
       - lambda: |-
           if (id(outlet_state).state == NAN) return;
-          int current = std::roundl(id(max_current).state);
-          ESP_LOGD("main", "Disable charging. Set current is: %d", current);
-          if (current >= 3) id(modbus0)->send_current(3);
+          int state = std::roundl(id(charging_allowed).state);
+          ESP_LOGD("main", "Allow charging turn off. Current state is: %d", state);
+          if (state > 0) id(modbus0)->send_charging_disable();
 

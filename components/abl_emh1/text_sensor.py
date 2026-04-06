@@ -17,7 +17,7 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_ABL_EMH1_ID): cv.use_id(ABLeMH1),
         cv.Optional(CONF_MODE): text_sensor.text_sensor_schema(
-						text_sensor.TextSensor, icon=ICON_MODE
+            text_sensor.TextSensor, icon=ICON_MODE
         ),
         cv.Optional(CONF_SERIAL_NUMBER): text_sensor.text_sensor_schema(
             text_sensor.TextSensor, icon=ICON_SERIAL_NUMBER

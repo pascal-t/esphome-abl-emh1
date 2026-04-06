@@ -27,6 +27,7 @@ CONF_L2_CURRENT = "l2_current"
 CONF_L3_CURRENT = "l3_current"
 CONF_MAX_CURRENT = "max_current"
 CONF_OUTLET_STATE = "outlet_state"
+CONF_CHARGING_ALLOWED = "charging_allowed"
 CONF_EN1_STATUS = "en1_status"
 CONF_EN2_STATUS = "en2_status"
 CONF_DUTY_CYCLE_REDUCED = "duty_cycle_reduced"
@@ -40,15 +41,16 @@ ICON_MODE = "mdi:information"
 SENSORS = [
     CONF_ENERGY_TODAY,
     CONF_ENERGY_TOTAL,
-		CONF_L1_CURRENT,
-		CONF_L2_CURRENT,
-		CONF_L3_CURRENT,
-		CONF_MAX_CURRENT,
+    CONF_L1_CURRENT,
+    CONF_L2_CURRENT,
+    CONF_L3_CURRENT,
+    CONF_MAX_CURRENT,
     CONF_OUTLET_STATE,
-		CONF_EN1_STATUS,
-		CONF_EN2_STATUS,
-		CONF_DUTY_CYCLE_REDUCED,
-		CONF_UCP_STATUS
+    CONF_CHARGING_ALLOWED,
+    CONF_EN1_STATUS,
+    CONF_EN2_STATUS,
+    CONF_DUTY_CYCLE_REDUCED,
+    CONF_UCP_STATUS,
 ]
 
 # pylint: disable=too-many-function-args
@@ -94,6 +96,12 @@ CONFIG_SCHEMA = cv.Schema(
             state_class=STATE_CLASS_MEASUREMENT,
         ),
         cv.Optional(CONF_OUTLET_STATE): sensor.sensor_schema(
+            unit_of_measurement=UNIT_EMPTY,
+            icon=ICON_MODE,
+            accuracy_decimals=0,
+            device_class=DEVICE_CLASS_EMPTY,
+        ),
+        cv.Optional(CONF_CHARGING_ALLOWED): sensor.sensor_schema(
             unit_of_measurement=UNIT_EMPTY,
             icon=ICON_MODE,
             accuracy_decimals=0,

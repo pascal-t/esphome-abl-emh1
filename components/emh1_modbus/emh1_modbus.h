@@ -6,20 +6,31 @@
 namespace esphome {
 namespace emh1_modbus {
 
+static const uint8_t FUNCTION_READ = 0x03;
+static const uint8_t FUNCTION_WRITE = 0x10;
+
+static const uint16_t REG_READ_CHARGING_ALLOWED = 0x000F;
+static const uint16_t REG_MODIFY_STATE = 0x0005;
+static const uint16_t REG_SET_I_CMAX = 0x0014;
+static const uint16_t REG_READ_CURRENT_FULL = 0x002E;
+static const uint16_t REG_READ_SERIAL_NUMBER = 0x0050;
+
+static const uint16_t NO_CURRENT_ALLOWED = 0x03E8;
+
 struct eMH1MessageT {
   uint8_t DeviceId;
-	uint8_t FunctionCode;
-	uint16_t Destination;
-	uint16_t DataLength;
-	uint8_t LRC;
-	uint8_t WriteBytes;
-	uint8_t Data[100];
+  uint8_t FunctionCode;
+  uint16_t Destination;
+  uint16_t DataLength;
+  uint8_t LRC;
+  uint8_t WriteBytes;
+  uint8_t Data[100];
 };
 
 class eMH1ModbusDevice;
 
 class eMH1Modbus : public uart::UARTDevice, public Component {
- public:
+public:
   eMH1Modbus() = default;
 
   void setup() override;
@@ -33,15 +44,18 @@ class eMH1Modbus : public uart::UARTDevice, public Component {
   float get_setup_priority() const override;
 
   void send();
-  void send_current(uint8_t x);
+  void send_current(float x);
   void send_enable(uint8_t x);
   void query_status_report();
   void get_serial();
-  uint8_t hexencode_ascii(uint8_t val, char* outStr, uint8_t offset);
-	uint8_t hexencode_ascii(uint16_t val, char* outStr, uint8_t offset);
-	uint8_t hexencode_ascii(uint8_t* val, char* outStr, uint8_t offset, uint8_t cnt);
+  void get_charging_allowed();
+  void send_charging_disable();
+  void send_duty_cycle(uint16_t duty_cycle);
+  uint8_t hexencode_ascii(uint8_t val, char *outStr, uint8_t offset);
+  uint8_t hexencode_ascii(uint16_t val, char *outStr, uint8_t offset);
+  uint8_t hexencode_ascii(uint8_t *val, char *outStr, uint8_t offset, uint8_t cnt);
 
- protected:
+protected:
   bool parse_emh1_modbus_byte_(uint8_t byte);
   GPIOPin *flow_control_pin_{nullptr};
 
@@ -52,20 +66,21 @@ class eMH1Modbus : public uart::UARTDevice, public Component {
 };
 
 class eMH1ModbusDevice {
- public:
+public:
   void set_parent(eMH1Modbus *parent) { parent_ = parent; }
   void set_address(uint8_t address) { address_ = address; }
-	virtual void on_emh1_modbus_data(uint16_t function, uint16_t datalength, const uint8_t* data) = 0;
-  
-	void query_status_report() { this->parent_->query_status_report(); }
-  void get_serial() { this->parent_->get_serial(); }
+  virtual void on_emh1_modbus_data(uint16_t function, uint16_t datalength, const uint8_t *data) = 0;
 
- protected:
+  void query_status_report() { this->parent_->query_status_report(); }
+  void get_serial() { this->parent_->get_serial(); }
+  void get_charging_allowed() { this->parent_->get_charging_allowed(); }
+
+protected:
   friend eMH1Modbus;
 
   eMH1Modbus *parent_;
   uint8_t address_;
 };
 
-}  // namespace emh1_modbus
-}  // namespace esphome
+} // namespace emh1_modbus
+} // namespace esphome
