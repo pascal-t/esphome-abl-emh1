@@ -80,12 +80,6 @@ text_sensor:
       name: "Serial number"
       disabled_by_default: true
   - platform: template
-    name: "Outlet State Code"
-    id: outlet_state_code
-    lambda: |-
-      uint8_t state = (uint8_t) id(outlet_state).state;
-      return { format_hex_pretty(&state, 1) };
-  - platform: template
     name: Chargemode
     id: chargemode
     icon: "mdi:car"
@@ -160,9 +154,6 @@ sensor:
     device_class: power
     state_class: "measurement"
     lambda:
-      if (id(outlet_state).state != 0xC2) {
-        return 0;
-      }
       return (id(l1_current).state + id(l2_current).state + id(l3_current).state) * 230;
   - platform: uptime
     name: Uptime Sensor
@@ -192,16 +183,16 @@ switch:
     icon: "mdi:power"
     restore_mode: DISABLED
     lambda: 'return id(outlet_state).state != 0xE0;'
-    turn_off_action: 
-      - lambda: |-
-          if (id(abl_uptime).state <= 10.0) return;
-          if (id(outlet_state).state == NAN) return;
-          id(modbus0)->send_enable(0);
-    turn_on_action: 
+    turn_on_action:
       - lambda: |-
           if (id(abl_uptime).state <= 10.0) return;
           if (id(outlet_state).state == NAN) return;
           id(modbus0)->send_enable(1);
+    turn_off_action:
+      - lambda: |-
+          if (id(abl_uptime).state <= 10.0) return;
+          if (id(outlet_state).state == NAN) return;
+          id(modbus0)->send_enable(0);
   - platform: template
     name: "Allow charging"
     id: allow_charging_switch
