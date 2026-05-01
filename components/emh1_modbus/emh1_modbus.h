@@ -51,6 +51,7 @@ public:
   void get_charging_allowed();
   void send_charging_disable();
   void send_duty_cycle(uint16_t duty_cycle);
+  char hexencode_single(uint8_t val);
   uint8_t hexencode_ascii(uint8_t val, char *outStr, uint8_t offset);
   uint8_t hexencode_ascii(uint16_t val, char *outStr, uint8_t offset);
   uint8_t hexencode_ascii(uint8_t *val, char *outStr, uint8_t offset, uint8_t cnt);

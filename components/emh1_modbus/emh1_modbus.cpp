@@ -2,7 +2,6 @@
 #include "esphome/core/log.h"
 #include "esphome/core/helpers.h"
 #include "esphome.h"
-#include <cstdint>
 
 namespace esphome {
 namespace emh1_modbus {
@@ -28,7 +27,10 @@ void eMH1Modbus::setup() {
 void eMH1Modbus::loop() {
   const uint32_t now = millis();
   if (now - this->last_emh1_modbus_byte_ > 50) {
-    this->rx_buffer_.clear();
+    if (!this->rx_buffer_.empty()) {
+      ESP_LOGW(TAG, "Transmission interrupted. Discarding buffer.");
+      this->rx_buffer_.clear();
+    }
     this->last_emh1_modbus_byte_ = now;
   }
 
@@ -199,7 +201,7 @@ void eMH1Modbus::get_charging_allowed() {
   tx_message->DeviceId = DEVICE_ID;
   tx_message->FunctionCode = FUNCTION_READ;
   tx_message->Destination = REG_READ_CHARGING_ALLOWED;
-  tx_message->DataLength = 1;
+  tx_message->DataLength = 5;
   this->send();
 }
 
@@ -222,8 +224,8 @@ void eMH1Modbus::send_duty_cycle(uint16_t duty_cycle) {
   tx_message->DataLength = 1;
   tx_message->WriteBytes = 2;
   ESP_LOGD(TAG, "Set Max Current duty cycle to %d/1000 (0x%04X)", duty_cycle, duty_cycle);
-  tx_message->Data[0] = (uint8_t) duty_cycle >> 8;
-  tx_message->Data[1] = (uint8_t) duty_cycle & 0x00FF;
+  tx_message->Data[0] = (uint8_t) (duty_cycle >> 8);
+  tx_message->Data[1] = (uint8_t) (duty_cycle & 0x00FF);
   this->send();
 }
 
@@ -247,12 +249,16 @@ void eMH1Modbus::send_enable(uint8_t x) {
   this->send();
 }
 
+char eMH1Modbus::hexencode_single(uint8_t val) {
+  return (val < 0x0A) ? (val + '0') : (val - 0x0A + 'A');
+}
+
 // convert single uint8_t value to hex-encoded ascii, append to outStr
 uint8_t eMH1Modbus::hexencode_ascii(uint8_t val, char *outStr, uint8_t offset) {
   uint8_t highBits = (val & 0xF0) >> 4;
   uint8_t lowBits = (val & 0x0F);
-  outStr[offset] = (highBits > 0x09) ? (highBits + 55) : (highBits + 48);
-  outStr[offset + 1] = (lowBits > 0x09) ? (lowBits + 55) : (lowBits + 48);
+  outStr[offset] = hexencode_single(highBits);
+  outStr[offset + 1] = hexencode_single(lowBits);
   return offset + 2;
 }
 
