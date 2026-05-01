@@ -86,23 +86,30 @@ void ABLeMH1::decode_status_report_(const uint8_t *data, uint16_t datalength) {
   this->publish_state_(this->en2_status_sensor_, (data[2] & 0x20) >> 5);
   this->publish_state_(this->duty_cycle_reduced_, (data[2] & 0x40) >> 6);
   this->publish_state_(this->ucp_status_sensor_, (data[2] & 0x80) >> 7);
+
+  uint16_t l1_current = ((data[8] << 8) + data[9]);
+  if (l1_current == emh1_modbus::NO_CURRENT_ALLOWED) l1_current = 0;
+  uint16_t l2_current = ((data[6] << 8) + data[7]);
+  if (l2_current == emh1_modbus::NO_CURRENT_ALLOWED) l2_current = 0;
+  uint16_t l3_current = ((data[4] << 8) + data[5]);
+  if (l3_current == emh1_modbus::NO_CURRENT_ALLOWED) l3_current = 0;
+
   if ((STATECODE[x] == 0xC2) || (STATECODE[x] == 0xC3) || (STATECODE[x] == 0xC4)) {
-    this->publish_state_(this->l3_current_sensor_,
-                         ((data[4] << 8) + data[5]) / 10.0);
-    this->publish_state_(this->l2_current_sensor_,
-                         ((data[6] << 8) + data[7]) / 10.0);
-    this->publish_state_(this->l1_current_sensor_,
-                         ((data[8] << 8) + data[9]) / 10.0);
+    this->publish_state_(this->l1_current_sensor_, l1_current / 10.0);
+    this->publish_state_(this->l3_current_sensor_, l3_current / 10.0);
+    this->publish_state_(this->l2_current_sensor_, l2_current / 10.0);
   } else {
     this->publish_state_(this->l1_current_sensor_, 0.0);
     this->publish_state_(this->l2_current_sensor_, 0.0);
     this->publish_state_(this->l3_current_sensor_, 0.0);
   }
+
   uint8_t v1 = data[2] & 0x03;
   uint8_t v2 = data[3];
   float v = (v1 * 256 + v2) * 0.06;
   ESP_LOGD(TAG, "Read max current value 0x%02X 0x%02X", v1, v2);
   this->publish_state_(this->max_current_sensor_, v);
+
   this->no_response_count_ = 0;
   // read charging allowed status after processing status report,
   // because emh1_modbus cannot send / receive simultaneously
